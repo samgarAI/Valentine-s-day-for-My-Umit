@@ -1,1 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propose Day Surprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: radial-gradient(circle at center, #2d0b16 0%, #0f0206 100%);
+            color: #ffe4e6;
+            overflow-y: auto; 
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .handwriting {
+            font-family: 'Dancing Script', cursive;
+        }
+        .title-font {
+            font-family: 'Pacifico', cursive;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+        }
+        #particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .fade-in { animation: fadeIn 0.8s ease-in-out forwards; }
+        .slide-up { animation: slideUp 0.8s ease-in-out forwards; }
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+        .heart-beat { animation: beat 1s infinite alternate; }
+        @keyframes beat { to { transform: scale(1.1); } }
+        .float { animation: float 6s ease-in-out infinite; }
+        @keyframes float { 
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #ff4d6d, #c9184a);
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
+            transition: all 0.3s ease;
+        }
+        /* Custom Yes/No Colors */
+        .btn-yes {
+            background: linear-gradient(45deg, #ef4444, #991b1b);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+        .btn-no {
+            background: linear-gradient(45deg, #3b82f6, #1e40af);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn-primary:active, .btn-yes:active, .btn-no:active { transform: scale(0.95); }
+        .btn-option {
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        .btn-option:hover { background-color: rgba(255, 77, 109, 0.2); border-color: #ff4d6d; }
+        .btn-option.wrong { background-color: #374151; border-color: #4b5563; color: #9ca3af; text-decoration: line-through; }
+        .hidden-page { display: none !important; }
+        .envelope-wrapper { position: relative; cursor: pointer; transition: transform 0.3s; }
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: brown;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 100px solid brown;
+            z-index: 3;
+            transform-origin: top;
+            transition: transform 0.5s 0.5s;
+        }
+        .envelope.open::before { transform: rotateX(180deg); z-index: 1; }
+        .letter {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 270px;
+            height: 180px;
+            background: beige;
+            color: #590d22;
+            border-radius: 5px;
+            z-index: 1;
+            transition: transform 0.5s;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            box-shadow: 0 -5px 10px rgba(0,0,0,0.2);
+        }
+        .envelope.open .letter { transform: translateY(-100px); z-index: 4; height: 300px; }
+        .gif-container { width: 150px; height: 150px; margin: 0 auto 20px auto; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255, 77, 109, 0.3); }
+        .gif-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .gallery-img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            border-radius: 1rem;
+            border: 2px solid rgba(255, 77, 109, 0.3);
+            transition: transform 0.3s;
+        }
+        .gallery-img:hover { transform: scale(1.05); }
 
+        /* Typewriter Cursor */
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            background-color: #ec4899;
+            margin-left: 4px;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
+    </style>
+</head>
+<body class="min-h-screen w-screen flex flex-col items-center relative py-10">
+
+    <div id="particles" class="pointer-events-none opacity-40 z-0"></div>
+
+    <!-- Page 1 -->
+    <div id="page1" class="text-center p-6 max-w-md w-full slide-up z-10 flex flex-col justify-center min-h-[80vh]">
+        <div class="gif-container"><img src="https://media.tenor.com/lquwmqAgQekAAAAm/bubu-dudu.webp" alt="Hello"></div>
+        <h1 class="text-5xl md:text-6xl title-font text-pink-500 mb-4 min-h-[1.5em]"><span id="typewriter"></span><span class="cursor">|</span></h1>
+        <p class="text-xl mb-8 font-medium text-rose-200">Менің саған қояр ерекше сұрағым бар...</p>
+        <button onclick="nextPage(2)" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-xl flex items-center justify-center gap-2 mx-auto">
+            <span>Ал ендеше кеттік</span> <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <!-- Page 2 -->
+    <div id="page2" class="hidden-page text-center p-6 max-w-lg w-full z-10 flex flex-col justify-center min-h-[80vh]">
+        <div class="gif-container"><img src="https://media.tenor.com/YiMNm2QVdMoAAAAm/bubu-dudu-sseeyall.webp" alt="Quiz"></div>
+        <h2 class="text-3xl font-bold mb-2 text-pink-400">Кезең 1: Махаббат сұрағы 📝</h2>
+        <div id="q1" class="quiz-step">
+            <p class="text-xl font-bold mb-6">1. Бұл қарым қатынаста кім бақытты?</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="wrongAnswer(this)" class="btn-option py-3 px-6 rounded-xl font-semibold">Сен</button>
+                <button onclick="wrongAnswer(this)" class="btn-option py-3 px-6 rounded-xl font-semibold">Мен </button>
+                <button onclick="nextQuiz('q1', 'q2')" class="btn-option py-3 px-6 rounded-xl font-semibold">Біз бірге! 🥰</button>
+            </div>
+        </div>
+        <div id="q2" class="quiz-step hidden-page">
+            <p class="text-xl font-bold mb-6">2. Күйеуің үшін ең баға жетпес сыйлық?</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="wrongAnswer(this)" class="btn-option py-3 px-6 rounded-xl font-semibold">Қымбат сыйлық 🎁</button>
+                <button onclick="nextQuiz('q2', 'q3')" class="btn-option py-3 px-6 rounded-xl font-semibold">Біздің қол ұстасқанымыз 🤝</button>
+                <button onclick="wrongAnswer(this)" class="btn-option py-3 px-6 rounded-xl font-semibold">Көп тамақ 🍕</button>
+            </div>
+        </div>
+        <div id="q3" class="quiz-step hidden-page">
+            <p class="text-xl font-bold mb-6">3. Сен менімен мәңгілікке қасымда боласың ба?</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="wrongAnswer(this)" class="btn-option py-3 px-6 rounded-xl font-semibold">Мүмкін... 🤔</button>
+                <button onclick="finishQuiz()" class="btn-option py-3 px-6 rounded-xl font-semibold">Иә, Әрқашан! 🚀</button>
+                  <button onclick="wrongAnswer(this)" class="btn-option py-3 px-6 rounded-xl font-semibold">Жоқ ешқашан! </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 3 -->
+    <div id="page3" class="hidden-page text-center p-6 max-w-md w-full z-10 flex flex-col justify-center min-h-[80vh]">
+        <div class="gif-container"><img src="https://media.tenor.com/nBQQ6XM5BhIAAAAm/cute.webp" alt="Security"></div>
+        <div class="glass-card p-8 shadow-2xl slide-up">
+            <h2 class="text-2xl font-bold mb-4 text-pink-300">Финалды сұрақ</h2>
+            <p class="text-lg font-medium mb-8 text-rose-100">Сен менің әйелімсіңбе?</p>
+            <div class="flex flex-col gap-4">
+                <button onclick="nextPage(4)" class="btn-primary text-white font-bold py-3 px-6 rounded-xl shadow-lg">Иә, Әлбетте ! 🙋‍♀️</button>
+                <button id="fakeBtn" onmouseover="dodgeButton()" onclick="dodgeButton()" class="bg-white/10 text-gray-400 font-bold py-3 px-6 rounded-xl">Жоқ, Олай емес</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 4 -->
+    <div id="page4" class="hidden-page text-center p-4 max-w-md w-full z-10 flex flex-col justify-center min-h-[80vh]">
+        <div class="gif-container"><img src="https://media.tenor.com/-3Z-ojIe5IcAAAAm/bubu-dudu-sseeyall.webp" alt="Hunt"></div>
+        <h2 class="text-3xl title-font text-pink-400 mb-2">Сақинаны іздеу 💍</h2>
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="empty">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="ring">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="bug">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="ring">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="empty">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="bug">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="bug">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="ring">🌿</div>
+            <div onclick="checkBush(this)" class="bush bg-green-900/40 h-20 rounded-2xl flex items-center justify-center text-3xl cursor-pointer" data-content="empty">🌿</div>
+        </div>
+        <p id="ringCount" class="text-xl font-bold text-pink-400 mb-6 bg-white/10 px-6 py-2 rounded-full inline-block">Табылды: 0/3</p>
+    </div>
+
+    <!-- Page 5 -->
+    <div id="page5" class="hidden-page text-center w-full min-h-[80vh] relative z-10 flex flex-col items-center justify-center">
+        <div class="gif-container" style="height: 100px; width: 100px;"><img src="https://media.tenor.com/bvXwJ4I19ZQAAAAm/cat-cat-meme.webp" alt="Game"></div>
+        <h2 class="text-2xl font-bold text-pink-400 mb-1">Менің махаббатымды ұста! ❤️</h2>
+        <div class="relative w-full max-w-md h-[50vh] bg-black/40 rounded-3xl border border-white/10 overflow-hidden" id="gameContainer">
+            <canvas id="gameCanvas" class="w-full h-full"></canvas>
+            <div id="startScreen" class="absolute inset-0 flex items-center justify-center bg-black/70 z-20">
+                <button onclick="startGame()" class="btn-primary text-white font-bold py-3 px-8 rounded-full">Ойынды бастау</button>
+            </div>
+        </div>
+        <div id="loveMeter" class="w-full max-w-md mt-4 h-3 bg-white/10 rounded-full overflow-hidden">
+            <div id="loveProgress" class="bg-gradient-to-r from-pink-500 to-rose-600 h-full w-0"></div>
+        </div>
+    </div>
+
+    <!-- Page 6 -->
+    <div id="page6" class="hidden-page text-center p-6 max-w-md w-full flex flex-col items-center justify-center min-h-[80vh] z-10">
+        <div class="gif-container"><img src="https://media.tenor.com/mbsKdEmx9V0AAAAm/bubu-cute-bubu-adorable.webp" alt="Letter"></div>
+        <h2 class="text-3xl handwriting text-pink-400 mb-10">Саған арналған хат...</h2>
+        <div class="envelope-wrapper" onclick="openEnvelope()">
+            <div id="envelope" class="envelope">
+                <div class="letter text-center">
+                    <p class="handwriting text-2xl mb-2 text-rose-700">Үмітім,</p>
+                    <p class="text-sm Roboto text-gray-700 font-medium">Мен мінсіз емеспін. Бірақ сені қорғауға, қолыңды ұстап қалуға, әрдайым қолдауға, соңына дейін баруға дайынмын. Себебі <br><span class="text-rose-500 font-bold">Мен сені шексіз сүйемін!</span></p>
+                    <div class="mt-4 text-4xl">💍</div>
+                </div>
+            </div>
+        </div>
+        <button id="letterBtn" onclick="nextPage('Gallery')" class="hidden mt-8 btn-primary text-white font-bold py-3 px-8 rounded-full fade-in">Біздің естеліктеріміз...</button>
+    </div>
+
+    <!-- Page Gallery -->
+    <div id="pageGallery" class="hidden-page text-center p-6 max-w-lg w-full z-10 flex flex-col justify-center min-h-[80vh]">
+        <h2 class="text-3xl title-font text-pink-400 mb-8">Бағалы сәттер 📸</h2>
+        <div class="grid grid-cols-1 gap-4 mb-10">
+            <img src="https://i.pinimg.com/736x/9b/97/23/9b972314239e8c146213dc64168b3ead.jpg" alt="1" class="gallery-img">
+            <img src="https://i.pinimg.com/736x/01/ef/f6/01eff669f48805b3bf766f129a755dfa.jpg" alt="2" class="gallery-img">
+            <img src="https://i.pinimg.com/736x/7e/b6/ba/7eb6ba361884c2fd99889a2d0a489c1d.jpg" alt="3" class="gallery-img">
+            <img src="https://i.pinimg.com/736x/75/0c/97/750c97b5c20d857aa92be126c074d632.jpg" alt="4" class="gallery-img">
+            <img src="https://i.pinimg.com/736x/e8/4c/1c/e84c1c43d3b695b7cc37edb66a65691e.jpg" alt="5" class="gallery-img">
+            <img src="https://i.pinimg.com/736x/76/40/50/764050213fe111e105e68d35086fcf1a.jpg" alt="6" class="gallery-img">
+        </div>
+        <button onclick="nextPage(7)" class="btn-primary text-white font-bold py-4 px-10 rounded-full text-lg mx-auto">Соңғы нәрсе... ❤️</button>
+    </div>
+
+    <!-- Page 7 (Red YES / Blue NO) -->
+    <div id="page7" class="hidden-page text-center p-6 max-w-md w-full relative min-h-[80vh] flex flex-col justify-center items-center z-10">
+        <div class="gif-container"><img src="https://media.tenor.com/qGiP_qcGH3MAAAAm/peach-goma.webp" alt="Proposal"></div>
+        <h1 class="text-3xl text-pink-400 mb-8 font-bold">Мәңгі менікі боласың ба? 💍</h1>
+        <div class="relative w-full h-40">
+            <button id="yesBtn" onclick="acceptProposal()" class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 btn-yes text-white text-2xl font-bold py-4 px-12 rounded-2xl z-20 transition-all duration-300">ИӘӘ! ❤️</button>
+            <button id="noBtn" onclick="growYesButton()" class="absolute right-0 top-full mt-4 btn-no text-white text-lg font-bold py-3 px-8 rounded-xl z-10 transition-all duration-200">Жоқ</button>
+        </div>
+    </div>
+
+    <!-- Page 8 -->
+    <div id="page8" class="hidden-page text-center p-6 max-w-md w-full z-10 flex flex-col justify-center min-h-[80vh]">
+        <div class="gif-container"><img src="https://media.tenor.com/nQD8tNYfJzQAAAAm/dance-love.webp" alt="Celebration"></div>
+        <h1 class="text-3xl text-pink-400 mb-6">Жаным сол мені қатты жақсы көретініңді білгенмін ! 🎉</h1>
+        <div class="text-8xl mb-6 heart-beat">💍</div>
+        <p class="text-xl text-rose-100 font-medium">Дұрыс шешім қабылдадың жаным. <br> Мен сені қатты жақсы көремін!</p>
+        <p id="loveDays" class="text-xl mt-4 text-pink-300 font-bold"></p>
+    </div>
+
+    <script>
+        // Typewriter logic
+        const typewriterText = "Сәлем менің Үмітім!";
+        let charIndex = 0;
+        function typeEffect() {
+            if (charIndex < typewriterText.length) {
+                document.getElementById("typewriter").textContent += typewriterText.charAt(charIndex);
+                charIndex++;
+                setTimeout(typeEffect, 150);
+            }
+        }
+
+        window.onload = () => {
+            typeEffect();
+            createParticles();
+        };
+
+        let yesScale = 1;
+
+        function nextPage(id) {
+            document.querySelectorAll('[id^="page"]').forEach(el => el.classList.add('hidden-page'));
+            const next = document.getElementById('page' + id);
+            next.classList.remove('hidden-page');
+            next.classList.add('fade-in');
+            window.scrollTo(0,0);
+            if(id === 5) initGame();
+        }
+
+        function growYesButton() {
+            yesScale += 0.4;
+            const yesBtn = document.getElementById('yesBtn');
+            yesBtn.style.transform = `translate(-50%, -50%) scale(${yesScale})`;
+            const noBtn = document.getElementById('noBtn');
+            const messages = ["Сенімдісіңбе?", "Шынба??", "Хммм?", "Тағы ойлан!", "Иә бас!"];
+            noBtn.innerText = messages[Math.floor(Math.random()*messages.length)];
+        }
+
+        function nextQuiz(current, next) {
+            document.getElementById(current).classList.add('hidden-page');
+            const nextEl = document.getElementById(next);
+            nextEl.classList.remove('hidden-page');
+            nextEl.classList.add('pop-in');
+        }
+
+        function wrongAnswer(btn) {
+            btn.classList.add('wrong');
+            btn.innerText = "Тағы ойлан 😜";
+            setTimeout(() => { btn.classList.remove('wrong'); }, 1000);
+        }
+
+        function finishQuiz() {
+            confetti({ particleCount: 50, spread: 50 });
+            setTimeout(() => nextPage(3), 800);
+        }
+
+        function dodgeButton() {
+            const btn = document.getElementById('fakeBtn');
+            btn.style.transform = `translateX(${Math.random() * 20 - 10}px)`;
+        }
+
+        let ringsFound = 0;
+        function checkBush(element) {
+            if (element.classList.contains('checked')) return;
+            element.classList.add('checked');
+            const type = element.getAttribute('data-content');
+            if (type === 'ring') {
+                element.innerHTML = '💍';
+                ringsFound++;
+                document.getElementById('ringCount').innerText = `Табылды: ${ringsFound}/3`;
+                if (ringsFound === 3) setTimeout(() => nextPage(5), 500);
+            } else {
+                element.innerHTML = '🍃';
+            }
+        }
+
+        let canvas, ctx, animationId, hearts = [], score = 0, gameActive = false;
+        function initGame() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            canvas.addEventListener('pointerdown', (e) => {
+                if(!gameActive) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                for(let i = 0; i < hearts.length; i++) {
+                    if(Math.sqrt((x - hearts[i].x)**2 + (y - hearts[i].y)**2) < hearts[i].size) {
+                        hearts.splice(i, 1); score += 10;
+                        document.getElementById('loveProgress').style.width = score + '%';
+                        if(score >= 100) { gameActive = false; nextPage(6); }
+                        break;
+                    }
+                }
+            });
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameActive = true; hearts = []; spawnHeart(); gameLoop();
+        }
+
+        function spawnHeart() {
+            if(!gameActive) return;
+            hearts.push({ x: Math.random() * (canvas.width - 30) + 15, y: -20, size: 30, speed: 2, emoji: '❤️' });
+            setTimeout(spawnHeart, 700);
+        }
+
+        function gameLoop() {
+            if(!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hearts.forEach((h, i) => { h.y += h.speed; ctx.font = '30px Arial'; ctx.fillText(h.emoji, h.x, h.y); });
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function openEnvelope() {
+            const env = document.getElementById('envelope');
+            env.classList.add('open');
+            setTimeout(() => document.getElementById('letterBtn').classList.remove('hidden'), 1000);
+        }
+
+        function acceptProposal() {
+            nextPage(8);
+            calculateLoveDays();
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for(let i=0; i<30; i++) {
+                const el = document.createElement('div');
+                el.innerText = '❤️';
+                el.style.position = 'absolute';
+                el.style.left = Math.random() * 100 + 'vw';
+                el.style.top = Math.random() * 100 + 'vh';
+                el.style.animation = `float ${Math.random() * 5 + 5}s infinite`;
+                container.appendChild(el);
+            }
+        }
+        function calculateLoveDays() {
+           const startDate = new Date("2025-04-07");
+           const today = new Date();
+
+           const diffTime = today - startDate;
+           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+           document.getElementById("loveDays").innerText =
+           `Біз ${diffDays} күн бірге болдық ❤️`;}
+    </script>
+</body>
+</html>
